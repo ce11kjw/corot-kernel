@@ -42,8 +42,9 @@ jobs:
           mkdir -p out
           cp "$GITHUB_WORKSPACE/configs/corot-5.15.180.config" out/.config
           # 设备 config 里的 UNUSED_KSYMS_WHITELIST 是小米编译机的绝对路径，改为仓库内符号表
-          scripts/config --file out/.config --set-str UNUSED_KSYMS_WHITELIST "android/abi_gki_aarch64_mtk"
-          grep UNUSED_KSYMS out/.config
+          # 小米 build.sh 会现场生成 abi_symbollist.raw；我们直接关闭符号裁剪（只影响导出符号裁剪，不影响模块加载）
+          scripts/config --file out/.config --disable TRIM_UNUSED_KSYMS
+          grep -E "TRIM_UNUSED_KSYMS|UNUSED_KSYMS_WHITELIST" out/.config
           make ARCH=arm64 O=out LLVM=1 LLVM_IAS=1 \
             BRANCH=android13-5.15 KMI_GENERATION=8 \
             KCFLAGS="-D__ANDROID_COMMON_KERNEL__" \
