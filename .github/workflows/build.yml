@@ -42,11 +42,10 @@ jobs:
           mkdir -p out
           cp "$GITHUB_WORKSPACE/configs/corot-5.15.180.config" out/.config
           # 设备 config 里的 UNUSED_KSYMS_WHITELIST 是小米编译机的绝对路径，改为仓库内符号表
-          # ACK 的 gen_kheaders.sh 硬编码 tools/build/{cpio,tar}（来自 kernel/build 仓库），这里用系统工具链接补齐
-          mkdir -p tools/build
-          ln -sf "$(command -v cpio)" tools/build/cpio
-          ln -sf "$(command -v tar)" tools/build/tar
-          ls -l tools/build/
+          # ACK 的 gen_kheaders.sh 硬编码 $srctree/tools/build/{cpio,tar}（kernel/build 仓库提供），改为系统命令
+          sed -i 's|^cpio=.*|cpio=cpio|; s|^tar=.*|tar=tar|' kernel/gen_kheaders.sh
+          sed -n '9,13p' kernel/gen_kheaders.sh
+          which cpio tar || sudo apt-get install -y -qq cpio tar
           # 小米 build.sh 会现场生成 abi_symbollist.raw；我们直接关闭符号裁剪（只影响导出符号裁剪，不影响模块加载）
           scripts/config --file out/.config --disable TRIM_UNUSED_KSYMS
           grep -E "TRIM_UNUSED_KSYMS|UNUSED_KSYMS_WHITELIST" out/.config
