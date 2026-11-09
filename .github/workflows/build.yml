@@ -34,13 +34,24 @@ jobs:
           /usr/lib/llvm-14/bin/clang --version
           echo "/usr/lib/llvm-14/bin" >> "$GITHUB_PATH"
 
-      - name: Configure
+      - name: Configure (device config baseline)
         run: |
           cd ksrc
+          mkdir -p out
+          cp "$GITHUB_WORKSPACE/configs/corot-5.15.180.config" out/.config
           make ARCH=arm64 O=out LLVM=1 LLVM_IAS=1 \
             BRANCH=android13-5.15 KMI_GENERATION=8 \
             KCFLAGS="-D__ANDROID_COMMON_KERNEL__" \
-            defconfig
+            olddefconfig
+
+      - name: Config diff vs device
+        run: |
+          cd ksrc
+          diff <(grep -E "^(CONFIG_|# CONFIG_)" "$GITHUB_WORKSPACE/configs/corot-5.15.180.config" | sort) \
+               <(grep -E "^(CONFIG_|# CONFIG_)" out/.config | sort) > /tmp/cfgdiff.txt || true
+          echo "diff lines: $(wc -l < /tmp/cfgdiff.txt)"; head -60 /tmp/cfgdiff.txt
+          echo "---- key items ----"
+          grep -E "^CONFIG_(KPROBES|MODVERSIONS|CFI_CLANG|LTO_CLANG|MODULES|KALLSYMS_ALL|LOCALVERSION)=" out/.config
 
       - name: Show config facts
         run: |
