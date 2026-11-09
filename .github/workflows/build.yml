@@ -70,7 +70,17 @@ jobs:
           make ARCH=arm64 O=out LLVM=1 LLVM_IAS=1 -j"$(nproc)" \
             BRANCH=android13-5.15 KMI_GENERATION=8 \
             KCFLAGS="-D__ANDROID_COMMON_KERNEL__" \
-            Image 2>&1 | tail -250
+            Image > /tmp/build.log 2>&1 || true
+          echo "---- last 60 lines ----"; tail -60 /tmp/build.log
+          echo "---- first errors ----"; grep -nE "error:|Error [0-9]|undefined reference|No such file" /tmp/build.log | head -30
+          grep -q "Image is ready" /tmp/build.log && echo BUILD_OK || { echo "::error::build failed"; exit 1; }
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build.log
 
       - name: Report
         run: |
