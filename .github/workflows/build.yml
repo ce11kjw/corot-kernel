@@ -27,14 +27,12 @@ jobs:
           git clone --depth 1 --branch corot-t-oss https://github.com/MiCode/Xiaomi_Kernel_OpenSource.git ksrc
           cd ksrc && git log --oneline -1 && du -sh .git .
 
-      - name: Fetch clang r450784e
+      - name: Fetch clang (system llvm-14, AOSP r450784e == clang 14.0.7)
         run: |
-          mkdir -p tc
-          curl -sSL --retry 3 -o tc/clang.tar.gz "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r450784e.tar.gz"
-          ls -lh tc/clang.tar.gz
-          mkdir -p tc/clang && tar -xzf tc/clang.tar.gz -C tc/clang
-          tc/clang/bin/clang --version
-          echo "$GITHUB_WORKSPACE/tc/clang/bin" >> "$GITHUB_PATH"
+          sudo apt-get install -y -qq clang-14 lld-14 llvm-14
+          ls /usr/lib/llvm-14/bin | head -20
+          /usr/lib/llvm-14/bin/clang --version
+          echo "/usr/lib/llvm-14/bin" >> "$GITHUB_PATH"
 
       - name: Configure
         run: |
